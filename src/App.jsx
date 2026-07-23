@@ -4,6 +4,7 @@ import { fetchCalendar } from "./services/api";
 function App() {
   const [calendar, setCalendar] = useState(null);
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
+  const [impactFilter, setImpactFilter] = useState("all");
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -30,6 +31,13 @@ function App() {
   const dates = calendar.dates;
   const selectedDate = dates[selectedDateIndex];
 
+  const filteredEvents =
+    impactFilter === "all"
+      ? selectedDate.events
+      : selectedDate.events.filter(
+          (event) => event.impact === impactFilter
+        );
+
   return (
     <div style={styles.app}>
       <header style={styles.header}>
@@ -43,7 +51,9 @@ function App() {
             style={styles.navButton}
             disabled={selectedDateIndex === 0}
             onClick={() =>
-              setSelectedDateIndex(selectedDateIndex - 1)
+              setSelectedDateIndex(
+                selectedDateIndex - 1
+              )
             }
           >
             ← Previous
@@ -59,10 +69,13 @@ function App() {
           <button
             style={styles.navButton}
             disabled={
-              selectedDateIndex === dates.length - 1
+              selectedDateIndex ===
+              dates.length - 1
             }
             onClick={() =>
-              setSelectedDateIndex(selectedDateIndex + 1)
+              setSelectedDateIndex(
+                selectedDateIndex + 1
+              )
             }
           >
             Next →
@@ -73,59 +86,104 @@ function App() {
           {formatDate(selectedDate.date)}
         </h2>
 
-        {selectedDate.events.map((event) => (
-          <div
-            key={event.id}
-            style={styles.eventCard}
-          >
-            <div style={styles.eventTop}>
-              <span style={styles.time}>
-                {formatTime(event.scheduledTimestamp)}
-              </span>
-
-              <span style={styles.currency}>
-                {event.currency.flag}{" "}
-                {event.currency.code}
-              </span>
-
-              <span
+        <div style={styles.filterContainer}>
+          {["all", "high", "medium", "low"].map(
+            (filter) => (
+              <button
+                key={filter}
+                onClick={() =>
+                  setImpactFilter(filter)
+                }
                 style={{
-                  ...styles.impact,
-                  ...getImpactStyle(event.impact),
+                  ...styles.filterButton,
+                  ...(impactFilter === filter
+                    ? styles.activeFilter
+                    : {}),
                 }}
               >
-                {event.impact}
-              </span>
-            </div>
+                {filter}
+              </button>
+            )
+          )}
+        </div>
 
-            <h3 style={styles.eventTitle}>
-              {event.title}
-            </h3>
+        <p style={styles.eventCount}>
+          Showing {filteredEvents.length} of{" "}
+          {selectedDate.events.length} events
+        </p>
 
-            <div style={styles.values}>
-              {event.forecast && (
-                <span>
-                  Forecast:{" "}
-                  {event.forecast.formattedValue}
-                </span>
-              )}
-
-              {event.previous && (
-                <span>
-                  Previous:{" "}
-                  {event.previous.formattedValue}
-                </span>
-              )}
-            </div>
+        {filteredEvents.length === 0 ? (
+          <div style={styles.emptyState}>
+            No {impactFilter} impact events
+            scheduled for this day.
           </div>
-        ))}
+        ) : (
+          filteredEvents.map((event) => (
+            <div
+              key={event.id}
+              style={styles.eventCard}
+            >
+              <div style={styles.eventTop}>
+                <span style={styles.time}>
+                  {formatTime(
+                    event.scheduledTimestamp
+                  )}
+                </span>
+
+                <span style={styles.currency}>
+                  {event.currency.flag}{" "}
+                  {event.currency.code}
+                </span>
+
+                <span
+                  style={{
+                    ...styles.impact,
+                    ...getImpactStyle(
+                      event.impact
+                    ),
+                  }}
+                >
+                  {event.impact}
+                </span>
+              </div>
+
+              <h3 style={styles.eventTitle}>
+                {event.title}
+              </h3>
+
+              <div style={styles.values}>
+                {event.forecast && (
+                  <span>
+                    Forecast:{" "}
+                    {
+                      event.forecast
+                        .formattedValue
+                    }
+                  </span>
+                )}
+
+                {event.previous && (
+                  <span>
+                    Previous:{" "}
+                    {
+                      event.previous
+                        .formattedValue
+                    }
+                  </span>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </main>
     </div>
   );
 }
 
 function formatDate(dateString) {
-  const date = new Date(`${dateString}T00:00:00`);
+  const date = new Date(
+    `${dateString}T00:00:00`
+  );
 
   return date.toLocaleDateString("en-KE", {
     weekday: "long",
@@ -229,6 +287,43 @@ const styles = {
     fontSize: "20px",
     marginBottom: "16px",
     textAlign: "center",
+  },
+
+  filterContainer: {
+    display: "flex",
+    gap: "8px",
+    marginBottom: "10px",
+    flexWrap: "wrap",
+  },
+
+  filterButton: {
+    padding: "8px 14px",
+    borderRadius: "20px",
+    border: "1px solid #475569",
+    backgroundColor: "#1e293b",
+    color: "#cbd5e1",
+    cursor: "pointer",
+    textTransform: "capitalize",
+  },
+
+  activeFilter: {
+    backgroundColor: "#2563eb",
+    color: "white",
+    border: "1px solid #2563eb",
+  },
+
+  eventCount: {
+    color: "#94a3b8",
+    fontSize: "13px",
+    marginBottom: "14px",
+  },
+
+  emptyState: {
+    padding: "30px 20px",
+    textAlign: "center",
+    color: "#94a3b8",
+    backgroundColor: "#1e293b",
+    borderRadius: "12px",
   },
 
   eventCard: {

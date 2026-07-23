@@ -3,6 +3,7 @@ import { fetchCalendar } from "./services/api";
 
 function App() {
   const [calendar, setCalendar] = useState(null);
+  const [selectedDateIndex, setSelectedDateIndex] = useState(0);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -26,7 +27,8 @@ function App() {
     return <h1>Loading calendar...</h1>;
   }
 
-  const firstDate = calendar.dates[0];
+  const dates = calendar.dates;
+  const selectedDate = dates[selectedDateIndex];
 
   return (
     <div style={styles.app}>
@@ -36,11 +38,42 @@ function App() {
       </header>
 
       <main style={styles.container}>
+        <div style={styles.navigation}>
+          <button
+            style={styles.navButton}
+            disabled={selectedDateIndex === 0}
+            onClick={() =>
+              setSelectedDateIndex(selectedDateIndex - 1)
+            }
+          >
+            ← Previous
+          </button>
+
+          <button
+            style={styles.todayButton}
+            onClick={() => setSelectedDateIndex(0)}
+          >
+            Today
+          </button>
+
+          <button
+            style={styles.navButton}
+            disabled={
+              selectedDateIndex === dates.length - 1
+            }
+            onClick={() =>
+              setSelectedDateIndex(selectedDateIndex + 1)
+            }
+          >
+            Next →
+          </button>
+        </div>
+
         <h2 style={styles.dateTitle}>
-          {firstDate.date}
+          {formatDate(selectedDate.date)}
         </h2>
 
-        {firstDate.events.map((event) => (
+        {selectedDate.events.map((event) => (
           <div
             key={event.id}
             style={styles.eventCard}
@@ -91,6 +124,17 @@ function App() {
   );
 }
 
+function formatDate(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+
+  return date.toLocaleDateString("en-KE", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function formatTime(timestamp) {
   return new Date(timestamp).toLocaleTimeString(
     "en-KE",
@@ -129,15 +173,14 @@ const styles = {
     minHeight: "100vh",
     backgroundColor: "#0f172a",
     color: "#f8fafc",
-    fontFamily:
-      "Arial, sans-serif",
+    fontFamily: "Arial, sans-serif",
   },
 
   header: {
     padding: "24px 16px",
     backgroundColor: "#111827",
-    borderBottom:
-      "1px solid #334155",
+    borderBottom: "1px solid #334155",
+    textAlign: "center",
   },
 
   title: {
@@ -156,15 +199,41 @@ const styles = {
     padding: "20px 16px",
   },
 
+  navigation: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "8px",
+    marginBottom: "20px",
+  },
+
+  navButton: {
+    flex: 1,
+    padding: "10px 8px",
+    borderRadius: "8px",
+    border: "1px solid #475569",
+    backgroundColor: "#1e293b",
+    color: "#f8fafc",
+    cursor: "pointer",
+  },
+
+  todayButton: {
+    padding: "10px 14px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#2563eb",
+    color: "white",
+    cursor: "pointer",
+  },
+
   dateTitle: {
     fontSize: "20px",
     marginBottom: "16px",
+    textAlign: "center",
   },
 
   eventCard: {
     backgroundColor: "#1e293b",
-    border:
-      "1px solid #334155",
+    border: "1px solid #334155",
     borderRadius: "12px",
     padding: "16px",
     marginBottom: "12px",
@@ -194,8 +263,7 @@ const styles = {
   },
 
   eventTitle: {
-    margin:
-      "12px 0 10px",
+    margin: "12px 0 10px",
     fontSize: "17px",
   },
 
